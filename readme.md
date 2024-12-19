@@ -39,7 +39,7 @@ To set up and run the application locally:
 
 3. 🌐 Once the containers are running, you can access the following:
 
-    - 🖥️ **Frontend**: Open your browser and navigate to `http://localhost:3000`
+    - 🖥️ **Frontend**: Open your browser and navigate to `http://localhost:3000?itemId=0`
     - 🛠️ **Backend API**: The Flask backend will be accessible at `http://localhost:1234`
     - 🗄️ **PostgreSQL Database**: Accessible via `localhost:5432` (use the `postgres` user and password `mysecretpassword`).
     - ☁️ **Simulated S3 (LocalStack)**: Running at `http://localhost:4566`
