@@ -8,12 +8,13 @@ const App = () => {
   const [breadcrumbTrail, setBreadcrumbTrail] = useState([{ name: 'My Drive', data: [], id: 0 }]);
   const [contextMenuItem, setContextMenuItem] = useState(null);
   const [loading, setLoading] = useState(false);
+  const itemId = new URLSearchParams(window.location.search).get('itemId');
+
   useEffect(() => {
     const fetchFileSystem = async () => {
-      toast("Welcome to this demo site! Feel free to explore, all files and folders will be clear for no time");
       try {
         setLoading(true);
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/filesystem`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/filesystem/${itemId}`, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
         });
@@ -21,9 +22,9 @@ const App = () => {
         if (!response.ok) throw new Error('Failed to fetch file system');
 
         const data = await response.json();
-        console.log(data);
-        setCurrentItems(data);
-        setBreadcrumbTrail([{ name: 'My Drive', data, id: 0 }]);
+
+        setCurrentItems(data["filesystem"]);
+        setBreadcrumbTrail([{ name: data["currentItem"].name, data: data["filesystem"], id: data["currentItem"].id, parentId: data["currentItem"].parentId }]);
         setLoading(false);
       } catch (error) {
         console.error(error.message);
@@ -33,25 +34,15 @@ const App = () => {
     fetchFileSystem();
   }, []);
 
-
-
-  const handleItemClick = (item) => {
-    if (item.type === 'folder') {
-      setCurrentItems(item.children);
-      setBreadcrumbTrail([...breadcrumbTrail, { name: item.name, data: item.children, id: item.id }]);
+  const goBack = () => {
+    if (breadcrumbTrail[0].parentId !== null) {
+      window.location.href = `${window.location.href.split('?')[0]}?itemId=${breadcrumbTrail[0].parentId}`;
     }
   };
 
-  const handleBreadcrumbClick = (index) => {
-    setCurrentItems(breadcrumbTrail[index].data);
-    setBreadcrumbTrail(breadcrumbTrail.slice(0, index + 1));
-  };
-
-  const goBack = () => {
-    if (breadcrumbTrail.length > 1) {
-      const updatedBreadcrumbTrail = breadcrumbTrail.slice(0, -1);
-      setCurrentItems(updatedBreadcrumbTrail[updatedBreadcrumbTrail.length - 1].data);
-      setBreadcrumbTrail(updatedBreadcrumbTrail);
+  const handleItemClick = (item) => {
+    if (item.type === 'folder') {
+      window.location.href = `${window.location.href.split('?')[0]}?itemId=${item.id}`;
     }
   };
 
@@ -65,7 +56,6 @@ const App = () => {
   };
 
   const closeContextMenu = () => {
-    console.log(breadcrumbTrail)
     setContextMenuItem(null);
   };
 
@@ -73,7 +63,6 @@ const App = () => {
     if (!contextMenuItem) return;
 
     try {
-
       if (option === 'Delete') {
         setLoading(true);
         const response = await fetch(`${import.meta.env.VITE_API_URL}/filesystem/${contextMenuItem.item.id}`, {
@@ -90,7 +79,6 @@ const App = () => {
         setLoading(false);
         toast.success("Success!");
       }
-
 
       if (option === 'Download') {
         const response = await fetch(`${import.meta.env.VITE_API_URL}/filesystem/${contextMenuItem.item.id}/file`, {
@@ -134,26 +122,14 @@ const App = () => {
         setLoading(false);
         toast.error("Duplicate File Name!");
         return;
-      }
-      else if (!response.ok) throw new Error('File upload failed');
-
+      } else if (!response.ok) throw new Error('File upload failed');
 
       const result = await response.json();
-      setCurrentItems([...currentItems, { name: file.name, type: 'file', id: result.id }]);
 
-  
-      setBreadcrumbTrail((prevBreadcrumbTrail) => {
-        const updatedBreadcrumbTrail = [...prevBreadcrumbTrail];
-        const lastItem = updatedBreadcrumbTrail[updatedBreadcrumbTrail.length - 1]; 
-        lastItem.data = [...lastItem.data, { name: file.name, type: 'file', id: result.id, children: [] }]; 
-        return updatedBreadcrumbTrail; 
-      });
-      setLoading(false);
-      toast.success("Success!");
+      window.location.href = `${window.location.href.split('?')[0]}?itemId=${breadcrumbTrail[0].id}`;
     } catch (error) {
       console.error(error.message);
     }
-
   };
 
   const handleCreateFolder = async (folderName) => {
@@ -172,27 +148,13 @@ const App = () => {
         setLoading(false);
         toast.error("Duplicate Folder Name!");
         return;
-      }
-      else if (!response.ok) throw new Error('File upload failed');
-
-      const data = await response.json();
-      setCurrentItems([...currentItems, { name: data.name, type: 'folder', id: data.id, children: [] }]);
-      setBreadcrumbTrail((prevBreadcrumbTrail) => {
-        const updatedBreadcrumbTrail = [...prevBreadcrumbTrail];
-        const lastItem = updatedBreadcrumbTrail[updatedBreadcrumbTrail.length - 1]; 
-        lastItem.data = [...lastItem.data, { name: data.name, type: 'folder', id: data.id, children: [] }]; 
-        return updatedBreadcrumbTrail; 
-      });
-      setLoading(false);
-      toast.success("Success!");
+      } else if (!response.ok) throw new Error('File upload failed');
+      const result = await response.json();
+      window.location.href = `${window.location.href.split('?')[0]}?itemId=${breadcrumbTrail[0].id}`;
     } catch (error) {
       console.error(error.message);
     }
-
   };
-
-
-
 
   return (
     <div className="p-4 max-w-4xl mx-auto" onClick={closeContextMenu}>
@@ -220,27 +182,19 @@ const App = () => {
         </button>
       </div>
 
-      <div className="flex items-center mb-4">
+      <div className="flex items-center">
         <button
           onClick={goBack}
-          disabled={breadcrumbTrail.length === 1}
           className="mr-2 p-1 rounded-full hover:bg-gray-200 disabled:opacity-50"
         >
           <ChevronLeft size={20} />
         </button>
-        <div className="flex items-center">
-          {breadcrumbTrail.map((crumb, index) => (
-            <React.Fragment key={index}>
-              {index > 0 && <ChevronRight size={16} className="mx-1 text-gray-400" />}
-              <button
-                onClick={() => handleBreadcrumbClick(index)}
-                className="hover:underline focus:outline-none"
-              >
-                {crumb.name}
-              </button>
-            </React.Fragment>
-          ))}
-        </div>
+        {breadcrumbTrail.map((crumb, index) => (
+          <React.Fragment key={index}>
+            {index > 0 && <ChevronRight size={16} className="mx-1 text-gray-400" />}
+            {crumb.name}
+          </React.Fragment>
+        ))}
       </div>
 
       {loading ?
@@ -283,3 +237,4 @@ const App = () => {
 };
 
 export default App;
+

@@ -71,13 +71,15 @@ class FileSystemService:
         }
       
 
-    def list_items(self):
-        root_items = FileSystem.query.filter_by(parent_id=0).all()
+    def list_items(self, id):
+        root_items = FileSystem.query.filter_by(parent_id=id).all()
         items = []
         for item in root_items:
             if item.disabled == False:
                 items.append(self.get_item_tree(item))
-        return items
+        current_item = self.get_item(id)
+       
+        return current_item.name, current_item.id, current_item.parent_id,items
     
     def get_item_path(self, item_id):
         if item_id == 0:

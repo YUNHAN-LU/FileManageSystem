@@ -37,10 +37,11 @@ def delete_item(item_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
-@filesystem_bp.route('', methods=['GET'])
-def list_items():
+@filesystem_bp.route('/<int:item_id>', methods=['GET'])
+def list_items(item_id):
     fs_service = FileSystemService(current_app.s3_manager)
-    return jsonify(fs_service.list_items())
+    current_name, current_id, parent_id, child_items = fs_service.list_items(item_id)
+    return jsonify({"currentItem": {"name": current_name, "id": current_id, "parentId": parent_id}, "filesystem": child_items}), 200
 
 @filesystem_bp.route('/<int:item_id>/file', methods=['GET'])
 def get_item_file(item_id):
