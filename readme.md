@@ -2,7 +2,7 @@
 
 A dynamic full-stack file management system developed using React, Flask, PostgreSQL, and LocalStack. 
 
-🌐 Check out the [demo here](https://fmsdemo.hnd1.zeabur.app) 🎉
+🌐 Check out the [demo here](https://fmsdemo.hnd1.zeabur.app?itemId=0) 🎉
 
 This system empowers users to upload, retrieve, and manage files with an intuitive interface. The backend is containerized using Docker Compose, ensuring seamless deployment across the frontend, backend, database, and simulated S3 services.
 
